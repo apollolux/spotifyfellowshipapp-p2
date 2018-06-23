@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="author" content="Alex Rosario" />
+<title>Spotify tester - Calendar webapp</title>
+<style type="text/css">
+body, table	{font-family:"Helvetica Neue", sans-serif; font-size:inherit;}
+body	{margin:0 auto; padding:0; border:0; font-size:10pt;}
+
+tr	{vertical-align:top;}
+
+input, select, textarea, button	{position:relative;}
+input:after, select:after, textarea:after, button:after	{position:relative; display:inline-block;}
+
+form input[required]:after, form select[required]:after, form textarea[required]:after, form button[required]:after	{position:relative; content:'*'; display:inline-block; color:#e22;}
+
+.l	{text-align:left;}
+.c	{text-align:center;}
+.r	{text-align:right;}
+.j	{text-align:justify;}
+
+/**** begin clearfix ****/
+.cf:before, .cf:after	{content:' '; display:table;}
+.cf:after	{clear: both;}
+
+.cf>.fl	{float: left;}
+.cf>.fr	{float: right;}
+/**** end clearfix ****/
+
+.disclaimer	{box-sizing:border-box; background:#fec; padding:1em 1em; margin:1em 1em; font-weight:bold; border-radius:4px;}
+
+#hdr	{background:#eef;}
+#nav	{}
+#nav ul	{margin:0 auto 1em; padding:0; list-style:none; text-align:center;}
+#nav ul li	{display:block;}
+
+#ftr	{font-size:85%;}
+
+.lux-cal	{margin:0 auto; box-sizing:border-box; border:1px solid #88d;}
+.lux-cal .day	{display:inline-block; width:14.28%; min-height:6em; box-sizing:border-box; text-align:center; vertical-align:top;}
+.lux-cal .day+.day	{border-left:1px dotted #aaf;}
+.lux-cal .day>header	{background:#eef; padding:1em 0;}
+.lux-cal .day .contents .event	{
+	box-sizing:border-box; margin:4px 4px;
+	border:1px solid #88d; border-radius:4px;
+	background:#ddf;
+	transition:ease-in-out 0.5s height;
+	vertical-align:top;
+}
+.lux-cal .day .contents .event header	{}
+.lux-cal .day .contents .event footer	{}
+.lux-cal .day .contents .event footer p	{margin:0 auto;}
+.lux-cal .day .contents .event footer a	{display:block;}
+.lux-cal .day .contents .event .time-start	{display:inline-block; vertical-align:top;}
+.lux-cal .day .contents .event .time-end	{display:inline-block; vertical-align:top;}
+.lux-cal .day .contents .event .desc	{height:0.75em; overflow:hidden; opacity:0.5; transition:ease-in-out 0.3s opacity, ease-in-out 0.75s height;}
+.lux-cal .day .contents .event.no-desc .desc	{display:none;}
+.lux-cal .day .contents .event:hover .desc	{height:auto; overflow:visible; opacity:1.0;}
+.lux-cal .day .contents .event .desc:after	{content:'\2026'; display:block;}
+.lux-cal .day .contents .event:hover .desc:after	{display:none;}
+
+#modal-wr	{
+	display:none;
+	position:fixed; top:0; left:0; right:0; bottom:0;
+	background:rgba(255,255,255,0.75);
+	justify-content:center;
+	align-items:center;
+}
+#modal-wr.open	{display:block; display:flex;}
+#modal	{box-sizing:border-box; position:relative; width:25em; margin:auto; background:#fff; border:1px solid #ddd;}
+#modal>header	{background:#eef;}
+#modal>header h4	{margin:0.5em;}
+#modal>footer	{background:#f8f8ff; padding:0.5em;}
+#modal form header	{display:none;}
+#modal form label.cf>span	{display:block;}
+#modal form label.cf>span+input	{}
+#modal form button[type="submit"]	{display:none;}
+</style>
+</head>
+<body>
+<header class="cf" id="hdr">
+	<h1 class="c">luxCalendar Simple</h1>
+	<nav id="nav">{{user_nav}}</nav>
+</header>
+<main class="cf" id="in">
+<p class="disclaimer c">NOTE: the final calendar would eventually read its info from a database rather than manipulate a flat file like the backend of this does.</p>
+<section id="cal-wr">
+<header class="c" id="cal-hdr">
+	<h1><select id="cal-yr">
+		<option value="2017">2017</option>
+		<option value="2018" selected="selected">2018</option>
+		<option value="2019">2019</option>
+	</select>
+	<select id="cal-mo">
+		<option value="1">Jan</option>
+		<option value="2">Feb</option>
+		<option value="3">Mar</option>
+		<option value="4">Apr</option>
+		<option value="5">May</option>
+		<option value="6" selected="selected">June</option>
+		<option value="7">July</option>
+		<option value="8">Aug</option>
+		<option value="9">Sep</option>
+		<option value="10">Oct</option>
+		<option value="11">Nov</option>
+		<option value="12">Dec</option>
+	</select></h1>
+	<label class="cf"><input type="checkbox" name="showall" value="1" /> Show everyone's events</label>
+</header>
+<div id="cal">{{lux_calendar}}</div>
+<noscript>
+<p class="c">Note: You must have a fairly modern browser and JavaScript enabled to view this demo properly!</p>
+</noscript>
+</section>
+<!-- form action="../events" method="post">
+<button type="submit" name="posty" id="posty" value="posted">Post!</button>
+</form -->
+<!-- p><a href="../events">Get!</a></p -->
+</main>
+<footer class="cf" id="ftr">
+	<p class="c">&copy; Alex Rosario</p>
+	<p class="c">Primarily for Spotify Tech Fellowship 2018 application</p>
+</footer>
+<!--
+FRONT END APP / MOBILE APP
+While you start thinking about building the calendar app, you’ll probably start to ask how full featured it needs to be. Here’s our list of things it must do, as well as a list of things that you can consider but do not have to do.
+
+Must Have Specs
+•The UI should have one month hard coded view (Pick any month)
+•Ignore users/login, just have one hardcoded user
+•Click on a day box, and be able to create a new event on that day which gets sent to the backend on clicking submit. 
+   ◦The form should have start time, end time, description and submit. 
+   ◦Once submit is clicked the form should disappear.
+   ◦Event should now appear in that day’s box.
+   ◦Events cannot span multiple days. Must start and end the same day.
+•Show all events the user has on their calendar.
+•The UI should have 4 rows of 7 boxes (simple case of a 28 day month).
+•The application should communicate with an API backend using JSON. Don’t spend a lot of time on the UI making it look beautiful; just make it functional.
+
+Optional Specs (Not required; bonus points available for inclusion of one or more features)
+•Switch between months
+•Week or day view
+•Handle events spanning multiple days
+•Handle too many events to fit in your box UI on a given day.
+•You should be able to update/delete events. How you implement this UX is up to you.
+•The UI should have 5 rows of 7 boxes with the correct date on the correct days.
+-->
+<div class="cf" id="modal-wr">
+	<div class="cf" id="modal">
+		<header class="cf"><h4>{{modal_title}}</h4></header>
+		<section class="cf body"></section>
+		<footer class="cf r">
+			<button type="button" name="modal-btn-cancel">Cancel</button>
+			<button type="button" name="modal-btn-ok">OK</button>
+		</footer>
+	</div>
+</div>
+<script type="text/javascript" async defer>/* <![CDATA[ */
+(function(){
+var N = {};
+N.templates = {};
+N.template = {
+	"load":function(f,fn){
+		var t = +(new Date());
+		var x = new XMLHttpRequest();
+		if (!x) {
+			throw "XMLHttpRequest not supported!";
+		}
+		//// when ready
+		x.onreadystatechange = "function"===(typeof fn)?fn:function() {
+			if (4===this.readyState && 200===this.status) {
+				//console.log(this.responseURL);
+				N.templates[f] = this.responseText;
+			}
+		};
+		x.open("GET","tmpl."+f+".html?t="+t, true);
+		x.send();
+		
+	}
+};
+var tmpl_day = "",
+	tmpl_evt = "",
+	tmpl_usr = "";
+var user = null;
+
+function attach_modal(el) {
+	if ("string"===typeof el) {
+		el = document.getElementById(el);
+	}
+	if (el) {
+		var btn_close = el.querySelector("button[name='modal-btn-cancel']");
+		if (btn_close) {
+			btn_close.addEventListener("click", function(e){
+				el.classList.remove("open");
+			});
+		}
+	}
+}
+function attach_cal_select(ey, em) {
+	if ("string"===typeof ey) {
+		ey = document.getElementById(ey);
+	}
+	if ("string"===typeof em) {
+		em = document.getElementById(em);
+	}
+	if (ey&&em) {
+		ey.addEventListener("change", function(e){lux_cal_get("../events");});
+		em.addEventListener("change", function(e){lux_cal_get("../events");});
+	}
+}
+function lux_escape(s) {
+	// from https://css-tricks.com/snippets/javascript/htmlentities-for-javascript/
+	return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function lux_encode_form(f) {
+	var ret = [];
+	// from https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Sending_forms_through_JavaScript#Sending_form_data
+	var fields = ["evtdate","evtstart","evtend","evtdesc","id","uid"];
+	for (var i=0, l=fields.length; i<l; ++i) {
+		ret.push(encodeURIComponent(fields[i])+'='+encodeURIComponent(f[fields[i]].value));
+	}
+	//encodeURIComponent(n)+'='+encodeURIComponent(f[n]);
+	//var fd = new FormData(f);
+	//for (var p of fd) console.log("encode_form",p,fd[p]);
+	//console.log(fd.entries());
+	return ret.join('&').replace(/%20/g,'+');
+}
+function lux_cal_init() {
+	var t = +(new Date());
+	N.template.load("user.nav", function(){
+		if (4===this.readyState && 200===this.status) {
+			N.templates["user.nav"] = this.responseText;
+			var q = new XMLHttpRequest();
+			if (!q) throw "XMLHttpRequest not supported!";
+			q.onreadystatechange = function() {
+				if (4===this.readyState && 200===this.status) {
+					//console.log(this.responseURL);
+					user = JSON.parse(this.responseText);
+					var el = document.getElementById("nav");
+					if (el) {
+						var tmp = N.templates["user.nav"]+"";
+						tmp = tmp.replace(/{{user_id}}/g, user[0].id);
+						tmp = tmp.replace(/{{user_name}}/g, user[0].displayName);
+						el.innerHTML = tmp;
+					}
+				}
+			};
+			q.open("GET","../users?t="+t, true);
+			q.send();
+		}
+	});
+	//lux_cal_init_evt(t);
+	N.template.load("edit");
+	//lux_cal_init_user(t);
+	N.template.load("day");
+	//lux_cal_init_day(t);
+	N.template.load("day.event");
+}
+function lux_cal_init_user(t) {
+	var x = new XMLHttpRequest();
+	if (!x) {
+		throw "XMLHttpRequest not supported!";
+	}
+	//// day template
+	x.onreadystatechange = function() {
+		if (4===this.readyState && 200===this.status) {
+			//console.log(this.responseURL);
+			user = JSON.parse(this.responseText);
+			var q = new XMLHttpRequest();
+			if (!q) throw "XMLHttpRequest not supported!";
+			q.onreadystatechange = function() {
+				if (4===this.readyState && 200===this.status) {
+					tmpl_usr = this.responseText;
+					var el = document.getElementById("nav");
+					if (el) {
+						var tmp = tmpl_usr+"";
+						tmp = tmp.replace(/{{user_id}}/g, user[0].id);
+						tmp = tmp.replace(/{{user_name}}/g, user[0].displayName);
+						el.innerHTML = tmp;
+					}
+				}
+			};
+			q.open("GET","tmpl.user.nav.html?t="+t, true);
+			q.send();
+		}
+	};
+	x.open("GET","../users?t="+t, true);
+	x.send();
+}
+function lux_cal_init_day(t) {
+	var x = new XMLHttpRequest();
+	if (!x) {
+		throw "XMLHttpRequest not supported!";
+	}
+	//// day template
+	x.onreadystatechange = function() {
+		if (4===this.readyState && 200===this.status) {
+			//console.log(this.responseURL);
+			tmpl_day = this.responseText;
+		}
+	};
+	x.open("GET","tmpl.day.html?t="+t, true);
+	x.send();
+}
+function lux_cal_init_evt(t) {
+	var x = new XMLHttpRequest();
+	if (!x) {
+		throw "XMLHttpRequest not supported!";
+	}
+	//// day template
+	x.onreadystatechange = function() {
+		if (4===this.readyState && 200===this.status) {
+			//console.log(this.responseURL);
+			tmpl_evt = this.responseText;
+		}
+	};
+	x.open("GET","tmpl.day.event.html?t="+t, true);
+	x.send();
+}
+function lux_cal_get(f) {
+	var x = new XMLHttpRequest();
+	if (!x) {
+		throw "XMLHttpRequest not supported!";
+	}
+	x.onreadystatechange = function() {
+		if (4===this.readyState && 200===this.status) {
+			var d = JSON.parse(this.responseText);
+			var y = document.getElementById("cal-yr").value,
+				m =  document.getElementById("cal-mo").value;
+			lux_cal_refresh("cal",d,y,m);
+		}
+	};
+	x.open("GET",f, true);
+	x.send();
+}
+function lux_cal_form(ed) {
+	//alert("TODO: load form for day "+ed);
+	//alert("TODO: load form for day "+this.dataset["iso-date"]);
+	var tid = null;
+	function _wait_for_tmpl() {
+		if (""===N.templates["edit"]) {
+			//// waiting for templates to be populated
+		}
+		else {
+			clearInterval(tid);
+			tid = null;
+			_refresh();
+		}
+	}
+	function _refresh() {
+		console.log("cal_form","templates are ready");
+		var txt = "";
+		var tmp_evt = N.templates["edit"]+"";
+		tmp_evt = tmp_evt.replace(/{{event_id}}/g, 0);
+		tmp_evt = tmp_evt.replace(/{{event_date}}/g, ed);
+		tmp_evt = tmp_evt.replace(/{{event_start}}/g, "");
+		tmp_evt = tmp_evt.replace(/{{event_end}}/g, "");
+		tmp_evt = tmp_evt.replace(/{{event_desc}}/g, "");
+		tmp_evt = tmp_evt.replace(/{{user_id}}/g, user[0].id);
+		txt += ""+tmp_evt;
+		var el = document.getElementById("modal-wr");
+		if (el) {
+			var mh = el.querySelector("header h4");
+			if (mh) {
+				mh.innerHTML = "Create New Event";
+			}
+			var m = el.querySelector(".body");
+			if (m) {
+				m.innerHTML = txt;
+				el.classList.add("open");
+			}
+			var f = m.querySelector("form");
+			if (f) {
+				f.onsubmit = function(){
+					//alert("TODO: AJAX form submit!");
+					console.log("form",this.action);
+					var x = new XMLHttpRequest();
+					if (!x) {
+						throw "XMLHttpRequest not supported!";
+					}
+					var fd = lux_encode_form(this);
+					console.log("encoded",fd);
+					//// day template
+					x.onreadystatechange = function() {
+						if (4===this.readyState && 200===this.status) {
+							//console.log(this.responseURL);
+							// TODO: submit!
+							var resp = JSON.parse(this.responseText);
+							console.log(resp);
+							if (0===resp.status) {
+								alert("Successfully created event!");
+								lux_cal_get("../events");
+								el.classList.remove("open");
+							}
+							else {
+								alert("Couldn't create event, check log!");
+								el.classList.remove("open");
+							}
+						}
+					};
+					x.open("POST",this.action, true);
+					x.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+					x.send(fd);
+					return false;
+				};
+			}
+			var ok = el.querySelector("button[name='modal-btn-ok']");
+			if (ok) {
+				ok.addEventListener("click", function(e){
+					if (f) {
+						//alert("TODO: add form submit action to '"+f.name+"'");
+						f.evtsub.click();
+					}
+				});
+			}
+		}
+	}
+	// TODO: refresh event editor
+	tid = setInterval(_wait_for_tmpl, 10);
+}
+function lux_cal_refresh(el,data) {
+	// TODO: refresh calendar view in div `el`
+	var now = new Date();
+	var one_day = 86400000;	// 1000*60*60*24
+	var y = arguments.length>2?arguments[2]|0:now.getFullYear(),
+		m = arguments.length>3?arguments[3]|0:now.getMonth()+1;
+	if ("string"===typeof el) {
+		el = document.getElementById(el);
+	}
+	if (el) {
+		console.log("TODO","cal_refresh",el,data,y,m);
+		var mo = (m<10?'0'+m:m);
+		var f_str = y+"-"+mo+"-"+"01T12:00:00";
+		var l_str = y+"-"+((m+1)<10?'0'+(m+1):m+1)+"-"+"01T12:00:00";
+		var d_first = new Date(f_str),
+			d_last = new Date(Date.parse(l_str)-one_day);
+		console.log(f_str,d_first);
+		console.log(d_last.toString(),d_last);
+		var day_start = d_first.getDay(),
+			day_end = d_last.getDate();
+		var tid = null;
+		function _wait_for_tmpl() {
+			if (""===N.templates["day"]||""===N.templates["day.event"]) {
+				//// waiting for templates to be populated
+			}
+			else {
+				clearInterval(tid);
+				tid = null;
+				_refresh();
+			}
+		}
+		function _refresh() {
+			console.log("cal_refresh","templates are ready");
+			var txt = "";
+			var d = data.filter(function(evt){return user&&evt.uid==user[0].id;})
+			var i, n;
+			for (i=0; i<day_start; ++i) {
+				var tmp = N.templates["day"]+"";
+				tmp = tmp.replace(/{{day_dow}}/g, i);
+				tmp = tmp.replace(/{{day_class}}/g, "dow-"+i+" empty");
+				tmp = tmp.replace(/{{day_num}}/g, "-");
+				tmp = tmp.replace(/{{day_date}}/g, "-");
+				tmp = tmp.replace(/{{day_contents}}/g, "&nbsp;");
+				tmp = tmp.replace(/{{day_footer}}/g, "&nbsp;");
+				txt += ""+tmp;
+			}
+			for (n=1; n<=day_end; ++n) {
+				var tmp = N.templates["day"]+"";
+				var tmp_contents = "";
+				var _today = y+"-"+mo+"-"+(n<10?'0'+n:n);
+				var today = d.filter(function(evt){return evt.date==_today;});
+				today.sort(function(a,b){
+					var ret_s, ret_e = 0;
+					var _a = new Date(_today+'T'+a.time.start+':00'),
+						_b = new Date(_today+'T'+b.time.start+':00');
+					ret_s = _a-_b;
+					_a = new Date(_today+'T'+a.time.end+':00');
+					_b = new Date(_today+'T'+b.time.end+':00');
+					ret_e = _a-_b;
+					return ret_s||ret_e;
+				});
+				var z = today.length;
+				for (var q=0; q<z; ++q) {
+					var tmp_evt = N.templates["day.event"]+"";
+					tmp_evt = tmp_evt.replace(/{{event_id}}/g, today[q].id);
+					tmp_evt = tmp_evt.replace(/{{event_class}}/g, ""!==today[q].description?'':'no-desc');
+					tmp_evt = tmp_evt.replace(/{{event_start}}/g, today[q].time.start);
+					tmp_evt = tmp_evt.replace(/{{event_end}}/g, today[q].time.end);
+					tmp_evt = tmp_evt.replace(/{{event_desc}}/g, today[q].description);
+					tmp_evt = tmp_evt.replace(/{{event_desc_esc}}/g, lux_escape(today[q].description));
+					tmp_contents += ""+tmp_evt;
+				}
+				tmp = tmp.replace(/{{day_dow}}/g, i);
+				tmp = tmp.replace(/{{day_class}}/g, "dow-"+i+" day-"+n);
+				tmp = tmp.replace(/{{day_num}}/g, n);
+				tmp = tmp.replace(/{{day_date}}/g, _today);
+				tmp = tmp.replace(/{{day_contents}}/g, z+" event(s)"+tmp_contents);
+				tmp = tmp.replace(/{{day_footer}}/g, "&nbsp;");
+				txt += ""+tmp;
+				i = (++i)%7;
+			}
+			if (i>0) for (i; i<7; ++i) {
+				var tmp = N.templates["day"]+"";
+				tmp = tmp.replace(/{{day_dow}}/g, i);
+				tmp = tmp.replace(/{{day_class}}/g, "dow-"+i+" empty");
+				tmp = tmp.replace(/{{day_num}}/g, "-");
+				tmp = tmp.replace(/{{day_date}}/g, "-");
+				tmp = tmp.replace(/{{day_contents}}/g, "&nbsp;");
+				tmp = tmp.replace(/{{day_footer}}/g, "&nbsp;");
+				txt += ""+tmp;
+			}
+			if (""!==txt) el.innerHTML = "<div class='lux-cal'>"+txt+"</div>";
+			var days = el.querySelectorAll(".day:not(.empty)");
+			console.log(days);
+			if (days) {
+				days.forEach(function(e,i,a){
+					e.addEventListener("click", function(ev){
+						lux_cal_form(this.dataset["iso-date"]);
+					});
+				});
+			}
+		}
+		// TODO: refresh calendar view
+		//alert("TODO: refresh calendar view!");
+		tid = setInterval(_wait_for_tmpl, 10);
+	}
+}
+window.onload = function(e) {
+	// TODO: load calendar backend
+	// TODO: refresh calendar view
+	attach_modal("modal-wr");
+	attach_cal_select("cal-yr","cal-mo");
+	lux_cal_init();
+	lux_cal_get("../events");
+};
+})();
+/* ]]> */</script>
+</body></html>

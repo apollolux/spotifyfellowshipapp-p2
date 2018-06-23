@@ -1,0 +1,10 @@
+Options +FollowSymLinks -MultiViews
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !(.*)\.(css|js|htc|pdf|jpg|jpeg|gif|png|ico)$ [NC]
+RewriteRule ^(events|users)(/([0-9]+))?$ CalendarBackend/luxcal.php?id=$3&act=$1 [QSA,L]
+</IfModule>

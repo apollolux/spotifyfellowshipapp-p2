@@ -1,0 +1,51 @@
+{
+	"user":[
+		{
+			"id":1,
+			"name":"alex",
+			"displayName":"Alex"
+		}
+	],
+	"events":[
+		{
+			"id":1,
+			"uid":1,
+			"date":"2018-06-28",
+			"time":{
+				"start":"14:30",
+				"end":"23:59"
+			},
+			"description":"This is a sample event!"
+		},
+		{
+			"id":2,
+			"uid":1,
+			"date":"2018-06-28",
+			"time":{
+				"start":"11:30",
+				"end":"13:59"
+			},
+			"description":"This is another sample event!"
+		},
+		{
+			"id":3,
+			"uid":1,
+			"date":"2018-06-28",
+			"time":{
+				"start":"14:30",
+				"end":"16:59"
+			},
+			"description":"This is an overlapping event!"
+		},
+		{
+			"id":4,
+			"uid":1,
+			"date":"2018-06-30",
+			"time":{
+				"start":"14:30",
+				"end":"15:30"
+			},
+			"description":"This is a second sample event!"
+		}
+	]
+}

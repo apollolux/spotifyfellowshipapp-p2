@@ -1,0 +1,10 @@
+<form name="evtedit" id="evtedit" method="post" action="../events">
+<header><h4>Create New Event</h4></header>
+<label class="cf"><span>Date</span><input type="date" name="evtdate" id="evtdate" value="{{event_date}}" required="required" /></label>
+<label class="cf"><span>Start time</span><input type="time" name="evtstart" id="evtstart" value="{{event_start}}" required="required" /></label>
+<label class="cf"><span>End time</span><input type="time" name="evtend" id="evtend" value="{{event_end}}" required="required" /></label>
+<label class="cf"><span>Description</span><textarea name="evtdesc" id="evtdesc" rows="4" cols="40">{{event_desc}}</textarea></label>
+<button type="submit" name="evtsub" id="evtsub" value="submit">Create Event</button>
+<input type="hidden" name="id" value="0" />
+<input type="hidden" name="uid" value="{{user_id}}" />
+</form>
